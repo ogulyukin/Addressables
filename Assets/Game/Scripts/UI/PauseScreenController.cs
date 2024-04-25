@@ -1,6 +1,7 @@
 using SampleGame;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using Zenject;
 
 namespace Game.Scripts.UI
@@ -10,6 +11,7 @@ namespace Game.Scripts.UI
         private MenuLoader menuLoader;
         private PauseScreen pauseScreen;
         private const string PauseUI = "PauseScreen";
+        private AsyncOperationHandle<GameObject> menuHandle;
 
         [Inject]
         public void Construct(MenuLoader mnLoader)
@@ -19,7 +21,8 @@ namespace Game.Scripts.UI
 
         private async void OnEnable()
         {
-            var pauseUI = await Addressables.LoadAssetAsync<GameObject>(PauseUI).Task;
+            menuHandle = Addressables.LoadAssetAsync<GameObject>(PauseUI);
+            var pauseUI = await menuHandle.Task;
             pauseScreen = Instantiate(pauseUI, gameObject.transform).GetComponent<PauseScreen>();
             pauseScreen.gameObject.SetActive(false);
             pauseScreen.ResumeButton.onClick.AddListener(Hide);
@@ -30,6 +33,11 @@ namespace Game.Scripts.UI
         {
             pauseScreen.ResumeButton.onClick.RemoveListener(Hide);
             pauseScreen.ExitButton.onClick.RemoveListener(menuLoader.LoadMenu);
+            
+            if (menuHandle.IsValid())
+            {
+                Addressables.Release(menuHandle);
+            }
         }
         
         public void Show()

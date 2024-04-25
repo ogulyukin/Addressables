@@ -9,17 +9,16 @@ namespace Game.Scripts.Locations
         [SerializeField] private string addressablePath;
         [SerializeField] private Transform contentTransform;
         private bool isLoaded;
-        private AsyncOperationHandle locationHandle;
+        private AsyncOperationHandle<GameObject> locationHandle;
 
         private async void OnTriggerEnter(Collider other)
         {
             if (!isLoaded)
             {
                 isLoaded = true;
-                var location =  Addressables.LoadAssetAsync<GameObject>(addressablePath);
-                await location.Task;
-                Instantiate(location.Result,contentTransform);
-                locationHandle = location;
+                locationHandle  =  Addressables.LoadAssetAsync<GameObject>(addressablePath);
+                await locationHandle .Task;
+                Instantiate(locationHandle .Result,contentTransform);
             }
         }
 

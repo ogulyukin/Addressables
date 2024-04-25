@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using SampleGame;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using Zenject;
 
 namespace Game.Scripts.UI
@@ -12,6 +13,7 @@ namespace Game.Scripts.UI
         private GameLoader gameLoader;
         private MenuScreen menuScreen;
         private const string MenuUI = "MenuScreen";
+        private AsyncOperationHandle<GameObject> menuHandle;
         
         [Inject]
         public void Construct(ApplicationExiter applicationFinisher, GameLoader gmLoader)
@@ -22,7 +24,8 @@ namespace Game.Scripts.UI
 
         private async void OnEnable()
         {
-            var menuUI =  await Addressables.LoadAssetAsync<GameObject>(MenuUI).Task;
+            menuHandle = Addressables.LoadAssetAsync<GameObject>(MenuUI);
+            var menuUI =  await menuHandle.Task;
             menuScreen = Instantiate(menuUI, gameObject.transform).GetComponent<MenuScreen>();
             menuScreen.StartButton.onClick.AddListener(gameLoader.LoadGame);
             menuScreen.ExitButton.onClick.AddListener(applicationExiter.ExitApp);
@@ -32,6 +35,11 @@ namespace Game.Scripts.UI
         {
             menuScreen.StartButton.onClick.RemoveListener(gameLoader.LoadGame);
             menuScreen.ExitButton.onClick.RemoveListener(applicationExiter.ExitApp);
+            
+            if (menuHandle.IsValid())
+            {
+                Addressables.Release(menuHandle);
+            }
         }
     }
 }
